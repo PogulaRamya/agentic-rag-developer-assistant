@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "agentic-rag-developer-assistant"
+version = "0.1.0"
+description = "Developer answers with source retrieval and bounded Stack Overflow trend queries"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+ "fastapi==0.115.12", "uvicorn==0.34.2", "pydantic==2.11.3",
+ "langgraph==0.3.34", "langchain-anthropic==0.3.12", "langchain-core==0.3.56",
+ "google-cloud-bigquery==3.31.0", "psycopg[binary]==3.2.6", "pgvector==0.4.1",
+ "beautifulsoup4==4.13.4", "numpy==2.2.5"
+]
+[project.optional-dependencies]
+models = ["fastembed==0.6.1"]
+test = ["pytest==8.3.5", "httpx==0.28.1"]
+eval = ["ragas==0.2.15", "datasets==3.5.0", "httpx==0.28.1"]
+[tool.setuptools.packages.find]
+include = ["app*"]
+[tool.setuptools.package-data]
+app = ["static/*.html", "sql/*.sql", "fixtures/*.json"]
+[tool.pytest.ini_options]
+testpaths = ["tests"]

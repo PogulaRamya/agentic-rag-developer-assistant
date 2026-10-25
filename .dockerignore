@@ -1,0 +1,9 @@
+.git
+.venv
+.env
+artifacts
+__pycache__
+*.pem
+*.key
+credentials*.json
+service-account*.json

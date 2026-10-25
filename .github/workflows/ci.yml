@@ -1,0 +1,45 @@
+name: CI
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: rag_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: test-only
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d rag_test"
+          --health-interval 5s --health-timeout 5s --health-retries 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -e '.[test]'
+      - run: pytest -q
+        env:
+          TEST_DATABASE_URL: postgresql://postgres:test-only@localhost:5432/rag_test
+      - run: python evaluation/validate_set.py evaluation/candidates.jsonl
+      - run: python -m compileall -q app airflow evaluation
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cp .env.example .env
+      - run: docker compose config --quiet
+      - run: docker build -t developer-assistant:test .
+      - run: |
+          docker run -d --name assistant -e APP_MODE=demo -p 127.0.0.1:8000:8000 developer-assistant:test
+          for attempt in $(seq 1 30); do
+            if curl --fail http://127.0.0.1:8000/health; then exit 0; fi
+            sleep 2
+          done
+          docker logs assistant
+          exit 1
